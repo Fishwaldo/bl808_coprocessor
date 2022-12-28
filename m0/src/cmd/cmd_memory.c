@@ -3,7 +3,7 @@
 #ifdef CONFIG_TLSF
 #include "bflb_tlsf.h"
 
-int meminfo(int argc, char **argv)
+int cmd_meminfo(int argc, char **argv)
 {
     if (argc != 1) {
         printf("Usage: meminfo");
@@ -13,5 +13,4 @@ int meminfo(int argc, char **argv)
     printf("Memory: Total: %dKb, Used: %dKb Free: %dKb\r\n", (tlsf_size->free + tlsf_size->used)/1024, tlsf_size->used/1024, tlsf_size->free/1024);
     return 0;
 }
-SHELL_CMD_EXPORT(meminfo, get free memory info)
 #endif

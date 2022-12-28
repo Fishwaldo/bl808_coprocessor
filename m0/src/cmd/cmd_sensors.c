@@ -1,7 +1,7 @@
 #include <bflb_adc.h>
-#include <shell.h>
+#include "cmd_sensors.h"
 
-int temp(int argc, char **argv) {
+int cmd_temp(int argc, char **argv) {
     uint16_t i = 0;
     float average_filter = 0.0;
 
@@ -32,11 +32,10 @@ int temp(int argc, char **argv) {
     printf("temp = %d\r\n", (uint32_t)(average_filter / 50.0));
     return 0;
 }
-SHELL_CMD_EXPORT(temp, get CPU Temp)
 
-int voltage(int argc, char **argv) {
+int cmd_voltage(int argc, char **argv) {
     struct bflb_device_s *adc = bflb_device_get_by_name("adc");
-
+ 
     /* adc clock = XCLK / 2 / 32 */
     struct bflb_adc_config_s cfg;
     cfg.clk_div = ADC_CLK_DIV_32;
@@ -69,4 +68,4 @@ int voltage(int argc, char **argv) {
     bflb_adc_vbat_disable(adc);
     return 0;
 }
-SHELL_CMD_EXPORT(voltage, get Voltage)
+

@@ -11,10 +11,10 @@ target_sources(app PRIVATE
     src/usbd_dfu.c
     src/flash.c
     src/console.c
-    src/cmd/cmd_memory.c
-    src/cmd/cmd_sensors.c
     src/partition.c
     src/softcrc.c)
+
+add_subdirectory(src/cmd)
 
 target_compile_definitions(app PRIVATE -DUSBD_DFU_XFER_SIZE=1024)
 target_compile_definitions(app PRIVATE -DUSBD_DFU_APP_DEFAULT_ADD=0x58000000)
@@ -25,5 +25,4 @@ target_compile_options(app PRIVATE -ggdb -O0)
 
 sdk_set_main_file(src/main.c)
 sdk_set_linker_script(bl808_flash_m0.ld)
-message(STATUS "Sources: ${SOURCES}")
 project(ox64_coproc)

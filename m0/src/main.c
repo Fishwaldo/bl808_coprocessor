@@ -15,6 +15,7 @@
 #include <usbh_core.h>
 #include "console.h"
 
+
 extern void cdc_acm_multi_init(void);
 
 // static uint8_t freertos_heap[configTOTAL_HEAP_SIZE];
@@ -35,10 +36,6 @@ int main(void)
     bflb_gpio_init(gpio, GPIO_PIN_13, GPIO_ALTERNATE | GPIO_FUNC_JTAG_M0);
     bflb_gpio_init(gpio, GPIO_PIN_6,  GPIO_ALTERNATE | GPIO_FUNC_JTAG_M0);
     bflb_gpio_init(gpio, GPIO_PIN_7,  GPIO_ALTERNATE | GPIO_FUNC_JTAG_M0);
-#ifdef CONFIG_TLSF
-    void *ptr = meminfo();
-#endif
-    void *ptr2 = temp();
 
     LOG_I("Starting 0x64_coproc on %d at 0x%08lx\r\n", GLB_Get_Core_Type(), __start);
     LOG_I("Flash Offset at 0x%08lx\r\n", bflb_flash_get_image_offset());
