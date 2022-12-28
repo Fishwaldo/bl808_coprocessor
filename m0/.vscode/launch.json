@@ -1,0 +1,63 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "gdb",
+            "request": "attach",
+            "name": "Debug Microcontroller",
+            "target": "extended-remote 10.100.201.177:1025",
+            "executable": "${workspaceRoot}/build/build_out/ox64_coproc_bl808_m0.elf",
+            "cwd": "${workspaceRoot}",
+            "gdbpath": "gdb-multiarch",
+            "showDevDebugOutput": false,
+            "printCalls": false,
+            "valuesFormatting": "parseText",
+            "autorun": [
+//                "monitor tpwr enable",
+//                "monitor swdp_scan",
+//                "attach 1",
+                //"file ${workspaceRoot}/build/build_out/ox64_coproc_bl808_m0.elf",
+                "set mem inaccessible-by-default off",
+                //"set architecture riscv:rv32",
+                "set remotetimeout 250",
+                //"#set disassemble-next-line on",
+                //"#mon gdb_breakpoint_override [hard|soft|disable]",
+                //"#mon reset",
+                //"set $pc=0x58000000",
+                //"set $mie=0",
+                //"set $mstatus=0x1880",
+                "thb main",
+                "mem 0x40000000 0x40004000 rw",
+                "mem 0x3f000000 0x3f018000 rw",
+                "mem 0x3efe8000 0x3f068000 rw",
+                "mem 0x22030000 0x22058000 rw",
+                "mem 0x22020000 0x22030000 rw",
+                //"#rom",
+                "mem 0x90000000 0x90020000 ro",
+                //"#psram",
+                "mem 0x50000000 0x58000000 rw",
+                //"#flash",
+                "mem 0x58000000 0x60000000 ro",
+                "set $pc=0x58000000",
+                "set $mie=0",
+                "set $mstatus=0x1880",
+            ]
+        },
+        // {
+        //     "name": "GDB",
+        //     "type": "cppdbg",
+        //     "request": "launch",
+        //     "cwd": "${workspaceRoot}",
+        //     "target": "${workspaceRoot}/build/build_out/ox64_coproc_bl808_m0.elf",
+        //     "gdbpath" : "/usr/bin/gdb-multiarch",
+        //     "autorun": [
+        //         "target remote 10.100.201.177:1025",
+        //         "symbol-file ./build/build_out/ox64_coproc_bl808_m0.elf",
+        //         "monitor reset"
+        //         ]
+        // }
+    ]
+}
