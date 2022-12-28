@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <bflb_flash.h>
+#include <bflb_efuse.h>
 #include <bl808_ef_cfg.h>
 #include <bl808_sflash.h>
 #include <bl808_clock.h>
@@ -40,7 +41,7 @@ int cmd_sysinfo(int argc, char **argv)
         printf("DeviceInfo        0x%08X\r\n", di.deviceInfo);
 
         uint8_t mac[6];
-        bflb_efuse_read_mac_address_opt(0, &mac, 0);
+        bflb_efuse_read_mac_address_opt(0, &mac[0], 0);
         printf("Mac Address:      %02X:%02X:%02X:%02X:%02X:%02X\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     }
