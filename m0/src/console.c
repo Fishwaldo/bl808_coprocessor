@@ -9,6 +9,7 @@
 #include "usb_uart.h"
 #include "cmd/cmd_sensors.h"
 #include "cmd/cmd_system.h"
+#include "cmd/cmd_d0.h"
 #ifdef CONFIG_TLSF
 #include "cmd/cmd_memory.h"
 #endif
@@ -17,6 +18,7 @@
 SHELL_CMD_EXPORT_ALIAS(cmd_voltage, voltage, get voltage);
 SHELL_CMD_EXPORT_ALIAS(cmd_temp, temp, get temperature);
 SHELL_CMD_EXPORT_ALIAS(cmd_sysinfo, sysinfo, get system info);
+SHELL_CMD_EXPORT_ALIAS(cmd_d0, d0, control d0 core);
 #ifdef CONFIG_TLSF
 SHELL_CMD_EXPORT_ALIAS(cmd_meminfo, meminfo, get free memory info);
 #endif

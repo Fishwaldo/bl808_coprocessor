@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <shell.h>
 #ifdef CONFIG_TLSF
 #include "bflb_tlsf.h"
 
