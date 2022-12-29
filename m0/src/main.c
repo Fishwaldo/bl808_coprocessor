@@ -14,6 +14,7 @@
 #include <semphr.h>
 #include <usbh_core.h>
 #include "console.h"
+#include "ipc.h"
 
 
 extern void cdc_acm_multi_init(void);
@@ -50,6 +51,10 @@ int main(void)
     LOG_I("Console Started\r\n");
     pt_table_set_flash_operation(bflb_flash_erase, bflb_flash_write, bflb_flash_read);    
     pt_table_dump();
+
+    ipc_init();
+    ipc_ping_d0();
+
     vTaskStartScheduler();
     /* we should never get here */
 }

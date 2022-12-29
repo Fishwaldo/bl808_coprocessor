@@ -12,7 +12,10 @@ target_sources(app PRIVATE
     src/flash.c
     src/console.c
     src/partition.c
-    src/softcrc.c)
+    src/softcrc.c
+    src/ipc.c
+    src/bl808_ipc.c
+    )
 
 add_subdirectory(src/cmd)
 
