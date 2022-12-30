@@ -1,0 +1,2 @@
+sdk_add_subdirectory_ifdef(CONFIG_IPC ipc)
+sdk_add_subdirectory_ifdef(CONFIG_RPMSG rpmsg-lite)

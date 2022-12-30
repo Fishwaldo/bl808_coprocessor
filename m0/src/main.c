@@ -53,7 +53,6 @@ int main(void)
     pt_table_dump();
 
     ipc_init();
-    ipc_ping_d0();
 
     vTaskStartScheduler();
     /* we should never get here */

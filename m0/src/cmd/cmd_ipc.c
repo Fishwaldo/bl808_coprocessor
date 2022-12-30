@@ -11,21 +11,21 @@ int ipc_ping(int argc, char **argv) {
         return 1;
     }
     if (strcasecmp(argv[2], "m0") == 0) {
-        if (ipc_ping_m0() == 1) 
+        if (ipc_send_ping(GLB_CORE_ID_M0) == 1) 
             printf("Sent Ping to M0\r\n");
         else
             printf("ipc ping m0 failed\r\n");
         return 1;
     }
     if (strcasecmp(argv[2], "d0") == 0) {
-        if (ipc_ping_d0() == 1) 
+        if (ipc_send_ping(GLB_CORE_ID_D0) == 1) 
             printf("Sent Ping to D0\r\n");
         else
             printf("ipc ping d0 failed\r\n");
         return 1;
     }
     if (strcasecmp(argv[2], "lp") == 0) {
-        if (ipc_ping_lp() == 1) 
+        if (ipc_send_ping(GLB_CORE_ID_LP) == 1) 
             printf("Sent Ping to LP\r\n");
         else
             printf("ipc ping lp failed\r\n");
@@ -48,9 +48,9 @@ int cmd_ipc(int argc, char **argv) {
         return 1;
     }
     if (strcasecmp(argv[1], "status") == 0) {
-        printf("M0: %s\r\n", ipc_status.m0alive ? "alive" : "dead");
-        printf("D0: %s\r\n", ipc_status.d0alive ? "alive" : "dead");
-        printf("LP: %s\r\n", ipc_status.lpalive ? "alive" : "dead");
+        printf("M0: %s\r\n", ipc_is_core_alive(GLB_CORE_ID_M0) ? "alive" : "dead");
+        printf("D0: %s\r\n", ipc_is_core_alive(GLB_CORE_ID_D0) ? "alive" : "dead");
+        printf("LP: %s\r\n", ipc_is_core_alive(GLB_CORE_ID_LP) ? "alive" : "dead");
         return 1;
     }
     printf("Unknown Command\r\n");
