@@ -60,7 +60,7 @@ typedef enum {
 
 
 
-int ipc_init();
+void rpmsg_task(void *unused);
 
 int ipc_send_ping(GLB_CORE_ID_Type cpu);
 int ipc_send_pong(GLB_CORE_ID_Type cpu);

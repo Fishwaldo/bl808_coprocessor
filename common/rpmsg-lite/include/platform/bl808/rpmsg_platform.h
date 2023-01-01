@@ -37,6 +37,14 @@
 #define RL_PLATFORM_BL808_LP_LINK_ID (2U)
 #define RL_PLATFORM_HIGHEST_LINK_ID  (2U)
 
+#if __riscv_xlen == 32
+  #define MCAUSE_INT         0x80000000UL
+  #define MCAUSE_CAUSE       0x000003FFUL
+#else
+   #define MCAUSE_INT         0x8000000000000000UL
+   #define MCAUSE_CAUSE       0x00000000000003FFUL
+#endif
+
 
 /* platform interrupt related functions */
 int32_t platform_init_interrupt(uint32_t vector_id, void *isr_data);
@@ -54,7 +62,7 @@ void platform_map_mem_region(uint32_t vrt_addr, uint32_t phy_addr, uint32_t size
 void platform_cache_all_flush_invalidate(void);
 void platform_cache_disable(void);
 uint32_t platform_vatopa(void *addr);
-void *platform_patova(uint32_t addr);
+void *platform_patova(uintptr_t addr);
 
 /* platform init/deinit */
 int32_t platform_init(void);

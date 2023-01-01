@@ -31,6 +31,8 @@ extern void cdc_acm_multi_init(void);
 extern uint32_t __start;
 int main(void)
 {
+    TaskHandle_t rpmsg_task_handle = NULL;
+
     board_init();
     struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");
     bflb_gpio_init(gpio, GPIO_PIN_12, GPIO_ALTERNATE | GPIO_FUNC_JTAG_M0);
@@ -52,7 +54,11 @@ int main(void)
     pt_table_set_flash_operation(bflb_flash_erase, bflb_flash_write, bflb_flash_read);    
     pt_table_dump();
 
-    ipc_init();
+  if (xTaskCreate(rpmsg_task, "RPMSG_TASK", 2048, NULL, tskIDLE_PRIORITY + 1U, &rpmsg_task_handle) != pdPASS)
+    {
+        printf("\r\nFailed to create rpmsg task\r\n");
+        return -1;
+    }
 
     vTaskStartScheduler();
     /* we should never get here */

@@ -13,7 +13,6 @@ target_sources(app PRIVATE
     src/console.c
     src/partition.c
     src/softcrc.c
-    src/bl808_ipc.c
     )
 
 add_subdirectory(src/cmd)

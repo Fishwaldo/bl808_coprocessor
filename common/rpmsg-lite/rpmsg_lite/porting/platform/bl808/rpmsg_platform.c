@@ -131,8 +131,7 @@ void platform_time_delay(uint32_t num_msec)
 int32_t platform_in_isr(void)
 {
     printf("TODO RP: in isr\r\n");
-    return false;
-//    return (((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0UL) ? 1 : 0);
+    return __get_MCAUSE() & MCAUSE_INT;
 }
 
 /**
@@ -226,7 +225,7 @@ void platform_cache_disable(void)
  */
 uint32_t platform_vatopa(void *addr)
 {
-    return ((uint32_t)(char *)addr);
+    return ((uintptr_t)(char *)addr);
 }
 
 /**
@@ -235,7 +234,7 @@ uint32_t platform_vatopa(void *addr)
  * Dummy implementation
  *
  */
-void *platform_patova(uint32_t addr)
+void *platform_patova(uintptr_t addr)
 {
     return ((void *)(char *)addr);
 }

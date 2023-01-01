@@ -2,6 +2,8 @@
 #include <bl808_glb.h>
 #include <bflb_mtimer.h>
 #include <bflb_flash.h>
+#include <FreeRTOS.h>
+#include <task.h>
 #ifdef CONFIG_TLSF
 #include <bflb_tlsf.h>
 #endif
@@ -18,6 +20,8 @@
 extern uint32_t __start;
 int main(void)
 {
+    TaskHandle_t rpmsg_task_handle = NULL;
+
     board_init();
 #if 0
     /* setup JTAG for D0 */
@@ -40,9 +44,14 @@ int main(void)
     pt_table_set_flash_operation(bflb_flash_erase, bflb_flash_write, bflb_flash_read);    
     pt_table_dump();
 #endif
-    ipc_init();
+  if (xTaskCreate(rpmsg_task, "RPMSG_TASK", 2048, NULL, tskIDLE_PRIORITY + 1U, &rpmsg_task_handle) != pdPASS)
+    {
+        printf("\r\nFailed to create rpmsg task\r\n");
+        return -1;
+    }
 
-//    vTaskStartScheduler();
+
+    vTaskStartScheduler();
     /* we should never get here */
 }
 

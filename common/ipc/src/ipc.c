@@ -1,6 +1,9 @@
 #include <bl808_ipc.h>
-#include <ring_buffer.h>
+#include <FreeRTOS.h>
+#include <task.h>
 #include <rpmsg_lite.h>
+#include <rpmsg_ns.h>
+#include <rpmsg_queue.h>
 #include "ipc.h"
 
 typedef struct {
@@ -12,6 +15,9 @@ typedef struct {
 ipc_status_t ipc_status;
 
 struct rpmsg_lite_instance *ipc_rpmsg;
+struct rpmsg_lite_endpoint *ipc_rpmsg_default_endpoint;
+rpmsg_ns_handle ipc_rpmsg_ns;
+rpmsg_queue_handle ipc_rpmsg_queue;
 
 static int ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd);
 
@@ -45,7 +51,6 @@ void ipc_m0_callback(uint32_t src) {
             env_isr(ffs(src >> IPC_MSG_RPMSG0));
             break;
     }
-    printf("unknown message\r\n");
 }
 
 void ipc_d0_callback(uint32_t src) {
@@ -58,8 +63,26 @@ void ipc_d0_callback(uint32_t src) {
         case IPC_MSG_PONG:
             /* nothing todo */
             break;
+        case IPC_MSG_RPMSG0:
+        case IPC_MSG_RPMSG1:
+        case IPC_MSG_RPMSG2:
+        case IPC_MSG_RPMSG3:
+        case IPC_MSG_RPMSG4:
+        case IPC_MSG_RPMSG5:
+        case IPC_MSG_RPMSG6:
+        case IPC_MSG_RPMSG7:
+        case IPC_MSG_RPMSG8:
+        case IPC_MSG_RPMSG9:
+        case IPC_MSG_RPMSG10:
+        case IPC_MSG_RPMSG11:
+        case IPC_MSG_RPMSG12:
+        case IPC_MSG_RPMSG13:
+        case IPC_MSG_RPMSG14:
+        case IPC_MSG_RPMSG15:
+            printf("RP Interrupt %d %d\r\n", src, ffs(src >> IPC_MSG_RPMSG0));
+            env_isr(ffs(src >> IPC_MSG_RPMSG0));
+            break;
     }
-    printf("unknown message\r\n");
 }
 
 void ipc_lp_callback(uint32_t src) {
@@ -72,33 +95,111 @@ void ipc_lp_callback(uint32_t src) {
         case IPC_MSG_PONG:
             /* nothing todo */
             break;
+        case IPC_MSG_RPMSG0:
+        case IPC_MSG_RPMSG1:
+        case IPC_MSG_RPMSG2:
+        case IPC_MSG_RPMSG3:
+        case IPC_MSG_RPMSG4:
+        case IPC_MSG_RPMSG5:
+        case IPC_MSG_RPMSG6:
+        case IPC_MSG_RPMSG7:
+        case IPC_MSG_RPMSG8:
+        case IPC_MSG_RPMSG9:
+        case IPC_MSG_RPMSG10:
+        case IPC_MSG_RPMSG11:
+        case IPC_MSG_RPMSG12:
+        case IPC_MSG_RPMSG13:
+        case IPC_MSG_RPMSG14:
+        case IPC_MSG_RPMSG15:
+            printf("RP Interrupt %d %d\r\n", src, ffs(src >> IPC_MSG_RPMSG0));
+            env_isr(ffs(src >> IPC_MSG_RPMSG0));
+            break;
     }
-    printf("unknown message\r\n");
 }
 
-int ipc_init() {
+int32_t ipc_rpmsg_callback(void *payload, uint32_t payload_len, uint32_t src, void *priv) {
+    printf("RPMSG Callback %d\r\n", src);
+    return RL_SUCCESS;
+}
+
+void ipc_rpmsg_ns_callback(uint32_t new_ept, const char *new_ept_name, uint32_t flags, void *user_data) {
+    printf("RPMSG NS Callback %d %s %d\r\n", new_ept, new_ept_name, flags);
+}
+
+
+void rpmsg_task(void *unused) {
+
+    volatile uint32_t remote_addr;
+    static char helloMsg[13];
+
 #if defined(CPU_M0)
-    uint32_t rbaddr = XRAM_RINGBUF_M0_ADDR;
-    uint32_t rbsize = XRAM_RINGBUF_M0_SIZE;
+    uintptr_t rbaddr = XRAM_RINGBUF_M0_ADDR;
+    uintptr_t rbsize = XRAM_RINGBUF_M0_SIZE;
     IPC_M0_Init(/* lp callback*/ ipc_lp_callback, /* d0 callback */ ipc_d0_callback);
     IPC_M0_Int_Unmask_By_Word(IPC_MSG_MASK_ALL());
-    ipc_rpmsg = rpmsg_lite_master_init((void *)rbaddr, rbsize, RL_PLATFORM_BL808_M0_LINK_ID, RL_NO_FLAGS);
+    ipc_rpmsg = rpmsg_lite_master_init((uintptr_t *)rbaddr, rbsize, RL_PLATFORM_BL808_M0_LINK_ID, RL_NO_FLAGS);
 #elif defined(CPU_D0)
-    uint32_t rbaddr = XRAM_RINGBUF_D0_ADDR;
-    uint32_t rbsize = XRAM_RINGBUF_D0_SIZE;
+    uintptr_t rbaddr = XRAM_RINGBUF_D0_ADDR;
+    uintptr_t rbsize = XRAM_RINGBUF_D0_SIZE;
     IPC_D0_Init(/* lp callback*/ ipc_lp_callback, /* m0 callback */ ipc_m0_callback);
     IPC_D0_Int_Unmask_By_Word(IPC_MSG_MASK_ALL());
-    ipc_rpmsg = rpmsg_lite_remote_init((void *)rbaddr, RL_PLATFORM_BL808_D0_LINK_ID, RL_NO_FLAGS);
+    ipc_rpmsg = rpmsg_lite_remote_init((uintptr_t *)rbaddr, RL_PLATFORM_BL808_D0_LINK_ID, RL_NO_FLAGS);
 #elif defined(CPU_LP)
-    uint32_t rbaddr = XRAM_RINGBUF_LP_ADDR;
-    uint32_t rbsize = XRAM_RINGBUF_LP_SIZE;
+    uintptr_t rbaddr = XRAM_RINGBUF_LP_ADDR;
+    uintptr_t rbsize = XRAM_RINGBUF_LP_SIZE;
     IPC_LP_Init(/* m0 callback*/ ipc_m0_callback, /* d0 callback */ ipc_d0_callback);
     IPC_LP_Int_Unmask_By_Word(IPC_MSG_MASK_ALL());
-    ipc_rpmsg = rpmsg_lite_remote_init((void *)rbaddr, RL_PLATFORM_BL808_LP_LINK_ID, RL_NO_FLAGS);
+    ipc_rpmsg = rpmsg_lite_remote_init((uintptr_t *)rbaddr, RL_PLATFORM_BL808_LP_LINK_ID, RL_NO_FLAGS);
 #else 
 #error "Unknown CPU"
 #endif
-    return 1;
+     while (0 == rpmsg_lite_is_link_up(ipc_rpmsg))
+     {
+        vTaskDelay(100/portTICK_PERIOD_MS);
+     }
+
+    ipc_rpmsg_queue = rpmsg_queue_create(ipc_rpmsg);
+
+    ipc_rpmsg_default_endpoint = rpmsg_lite_create_ept(ipc_rpmsg, RL_ADDR_ANY, rpmsg_queue_rx_cb, ipc_rpmsg_queue);
+    if (ipc_rpmsg_default_endpoint == RL_NULL) {
+        printf("Failed to create RPMSG endpoint\r\n");
+        return;
+    }
+    ipc_rpmsg_ns = rpmsg_ns_bind(ipc_rpmsg, ipc_rpmsg_ns_callback, NULL);
+    if (ipc_rpmsg_ns == RL_NULL) {
+        printf("Failed to bind RPMSG NS\r\n");
+        return;
+    }
+    vTaskDelay(100/portTICK_PERIOD_MS);
+
+    if (rpmsg_ns_announce(ipc_rpmsg, ipc_rpmsg_default_endpoint, "rpmsg-openamp-demo-channel", RL_NS_CREATE) != RL_SUCCESS) {
+        printf("Failed to announce RPMSG NS\r\n");
+        return;
+    }
+
+//    #ifdef RPMSG_LITE_MASTER_IS_LINUX
+    /* Wait Hello handshake message from Remote Core. */
+    (void)rpmsg_queue_recv(ipc_rpmsg, ipc_rpmsg_queue, (uint32_t *)&remote_addr, helloMsg, sizeof(helloMsg), ((void *)0),
+                           RL_BLOCK);
+//    #endif /* RPMSG_LITE_MASTER_IS_LINUX */
+    printf("Got Hello message from remote core: %s %d\r\n", helloMsg, remote_addr);
+
+    while (1)
+    {
+        uint32_t size;
+        void *rx_buffer;
+        char rx_msg[64];        
+        memset( rx_msg, 0, 64 );
+
+        rpmsg_queue_recv_nocopy(ipc_rpmsg, ipc_rpmsg_queue, (uint32_t *)&remote_addr, (char **)&rx_buffer, &size, RL_BLOCK);
+
+        memcpy( rx_msg, rx_buffer, size );
+        rpmsg_queue_nocopy_free( ipc_rpmsg, rx_buffer );
+
+        printf( "received %s!\r\n", rx_msg );
+    }
+
+    return;
 }
 
 static int ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd) {
