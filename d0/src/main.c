@@ -11,17 +11,25 @@
 
 #include <board.h>
 #include <log.h>
-//#include <FreeRTOS.h>
-//#include <semphr.h>
+#include <FreeRTOS.h>
+#include <semphr.h>
 #include "ipc.h"
 
+static uint8_t freertos_heap[configTOTAL_HEAP_SIZE];
 
+static HeapRegion_t xHeapRegions[] = {
+    { (uint8_t *)freertos_heap, 0 },
+    { NULL, 0 }, /* Terminates the array. */
+    { NULL, 0 }  /* Terminates the array. */
+};
 
 extern uint32_t __start;
 int main(void)
 {
     TaskHandle_t rpmsg_task_handle = NULL;
-
+    xHeapRegions[0].xSizeInBytes = configTOTAL_HEAP_SIZE;
+    vPortDefineHeapRegions(xHeapRegions);
+    LOG_I("Starting....\r\n");
     board_init();
 #if 0
     /* setup JTAG for D0 */
@@ -44,14 +52,18 @@ int main(void)
     pt_table_set_flash_operation(bflb_flash_erase, bflb_flash_write, bflb_flash_read);    
     pt_table_dump();
 #endif
-  if (xTaskCreate(rpmsg_task, "RPMSG_TASK", 2048, NULL, tskIDLE_PRIORITY + 1U, &rpmsg_task_handle) != pdPASS)
+    // vTaskDelay(1000/portTICK_RATE_MS);
+    // __BKPT();
+    if (xTaskCreate(rpmsg_task, "RPMSG_TASK", 2048, NULL, tskIDLE_PRIORITY + 1U, &rpmsg_task_handle) != pdPASS)
     {
         printf("\r\nFailed to create rpmsg task\r\n");
         return -1;
     }
-
-
     vTaskStartScheduler();
     /* we should never get here */
+    while (1) {
+        printf("haha\r\n");
+    }
+
 }
 

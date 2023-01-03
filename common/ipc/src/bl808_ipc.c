@@ -35,6 +35,8 @@
   */
 
 #include "bl808_ipc.h"
+#include "bflb_irq.h"
+#include "ipc.h"
 
 /** @addtogroup  BL606P_Peripheral_Driver
  *  @{
@@ -84,6 +86,11 @@ ipcIntCallback *d0IpcIntCbfArra[GLB_CORE_ID_MAX - 1] = { NULL };
  *  @{
  */
 
+void IPC_LP_IRQHandler(int irq, void *);
+void IPC_D0_IRQHandler(int irq, void *);
+void IPC_M0_IRQHandler(int irq, void *);
+
+
 /*@} end of group IPC_Private_Fun_Declaration */
 
 /** @defgroup  IPC_Private_Functions
@@ -116,6 +123,9 @@ void IPC_M0_Init(ipcIntCallback *onLPTriggerCallBack,
 
 #ifndef BFLB_USE_HAL_DRIVER
     Interrupt_Handler_Register(IPC_M0_IRQn, IPC_M0_IRQHandler);
+#else
+    bflb_irq_attach(IPC_M0_IRQn, IPC_M0_IRQHandler, NULL);
+    bflb_irq_enable(IPC_M0_IRQn);
 #endif
     CPU_Interrupt_Enable(IPC_M0_IRQn);
 }
@@ -218,7 +228,6 @@ void IPC_CPUx_Trigger_M0(IPC_Grp_Int_Src_Type src, uint8_t cpuxOffset)
     CHECK_PARAM(IS_IPC_Grp_Int_Src_Type(src));
 
     tmpVal = (1 << (src + cpuxOffset));
-
     BL_WR_REG(IPC0_BASE, IPC_CPU1_IPC_ISWR, tmpVal);
 }
 
@@ -269,6 +278,9 @@ void IPC_LP_Init(ipcIntCallback *onM0TriggerCallBack,
 
 #ifndef BFLB_USE_HAL_DRIVER
     Interrupt_Handler_Register(IPC_LP_IRQn, IPC_LP_IRQHandler);
+#else
+    bflb_irq_attach(IPC_LP_IRQn, IPC_LP_IRQHandler, NULL);
+    bflb_irq_enable(IPC_LP_IRQn);
 #endif
     CPU_Interrupt_Enable(IPC_LP_IRQn);
 }
@@ -422,6 +434,9 @@ void IPC_D0_Init(ipcIntCallback *onM0TriggerCallBack,
 
 #ifndef BFLB_USE_HAL_DRIVER
     Interrupt_Handler_Register(IPC_D0_IRQn, IPC_D0_IRQHandler);
+#else
+    bflb_irq_attach(IPC_D0_IRQn, IPC_LP_IRQHandler, NULL);
+    bflb_irq_enable(IPC_D0_IRQn);
 #endif
     CPU_Interrupt_Enable(IPC_D0_IRQn);
 }
@@ -665,7 +680,6 @@ void IPC_Common_Interrupt_Handler(uint32_t irqStatus, ipcIntCallback *callBack[G
 {
     uint32_t tmp;
     uint32_t grp = 0;
-
     for (grp = 0; grp < GLB_CORE_ID_MAX - 1; grp++) {
         tmp = (irqStatus >> (16 * grp)) & 0xffff;
         if (tmp != 0) {
@@ -684,15 +698,13 @@ void IPC_Common_Interrupt_Handler(uint32_t irqStatus, ipcIntCallback *callBack[G
  * @return None
  *
 *******************************************************************************/
-#ifndef BFLB_USE_HAL_DRIVER
-void IPC_M0_IRQHandler(void)
+void IPC_M0_IRQHandler(int irq, void *param)
 {
     uint32_t irqStatus;
     irqStatus = IPC_M0_Get_Int_Raw_Status();
     IPC_Common_Interrupt_Handler(irqStatus, m0IpcIntCbfArra);
     IPC_M0_Clear_Int_By_Word(irqStatus);
 }
-#endif
 
 /****************************************************************************/ /**
  * @brief  LP IPC IRQ handler
@@ -702,15 +714,15 @@ void IPC_M0_IRQHandler(void)
  * @return None
  *
 *******************************************************************************/
-#ifndef BFLB_USE_HAL_DRIVER
-void IPC_LP_IRQHandler(void)
+//#ifndef BFLB_USE_HAL_DRIVER
+void IPC_LP_IRQHandler(int irq, void *param)
 {
     uint32_t irqStatus;
     irqStatus = IPC_LP_Get_Int_Raw_Status();
     IPC_Common_Interrupt_Handler(irqStatus, lpIpcIntCbfArra);
     IPC_LP_Clear_Int_By_Word(irqStatus);
 }
-#endif
+//#endif
 
 /****************************************************************************/ /**
  * @brief  D0 IPC IRQ handler
@@ -720,15 +732,16 @@ void IPC_LP_IRQHandler(void)
  * @return None
  *
 *******************************************************************************/
-#ifndef BFLB_USE_HAL_DRIVER
-void IPC_D0_IRQHandler(void)
+//#ifndef BFLB_USE_HAL_DRIVER
+
+void IPC_D0_IRQHandler(int irq, void *param)
 {
     uint32_t irqStatus;
     irqStatus = IPC_D0_Get_Int_Raw_Status();
     IPC_Common_Interrupt_Handler(irqStatus, d0IpcIntCbfArra);
     IPC_D0_Clear_Int_By_Word(irqStatus);
 }
-#endif
+//#endif
 
 /*@} end of group IPC_Public_Functions */
 

@@ -17,12 +17,12 @@
  * to run the Linux
  */
 #ifndef VRING_ALIGN
-#define VRING_ALIGN (0x10U)
+#define VRING_ALIGN (0x1000U)
 #endif
 
 /* contains pool of descriptos and two circular buffers */
 #ifndef VRING_SIZE
-#define VRING_SIZE (0x400UL)
+#define VRING_SIZE (0x1000UL)
 #endif
 
 /* size of shared memory + 2*VRING size */

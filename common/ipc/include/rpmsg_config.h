@@ -163,7 +163,7 @@
 //! of the Linux blocking send.
 //! The default value is 0 (RPMsg-Lite to RPMsg-Lite communication).
 #ifndef RL_ALLOW_CONSUMED_BUFFERS_NOTIFICATION
-#define RL_ALLOW_CONSUMED_BUFFERS_NOTIFICATION (1)
+#define RL_ALLOW_CONSUMED_BUFFERS_NOTIFICATION (0)
 #endif
 
 //! @def RL_HANG

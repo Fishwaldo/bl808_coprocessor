@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <bl808_ipc.h>
+#include <log.h>
 #include "rpmsg_platform.h"
 #include "rpmsg_env.h"
+#include "ipc.h"
 
 
 
@@ -25,19 +27,16 @@ static LOCK_STATIC_CONTEXT platform_lock_static_ctxt;
 
 static void platform_global_isr_disable(void)
 {
-    printf("RP: disable irq\r\n");
     __disable_irq();
 }
 
 static void platform_global_isr_enable(void)
 {
-    printf("RP: enable irq\r\n");
     __enable_irq();
 }
 
 int32_t platform_init_interrupt(uint32_t vector_id, void *isr_data)
 {
-    printf("RP: init irq vector %ld\r\n", vector_id);
     /* Register ISR to environment layer */
     env_register_isr(vector_id, isr_data);
 
@@ -47,13 +46,8 @@ int32_t platform_init_interrupt(uint32_t vector_id, void *isr_data)
     RL_ASSERT(0 <= isr_counter);
     if (isr_counter == 0)
     {
-#if defined(CPU_D0)
-        IPC_D0_Int_Unmask(IPC_INT_SRC_BIT16 << vector_id);
-#elif defined(CPU_M0)
-        IPC_M0_Int_Unmask(IPC_INT_SRC_BIT16 << vector_id);
-#elif defined(CPU_LP)
-        IPC_LP_Int_Unmask(IPC_INT_SRC_BIT16 << vector_id);
-#endif
+        LOG_D("RP: init irq vector %ld\r\n", vector_id);
+        ipc_mask_rpmsg(vector_id);
     }
     isr_counter++;
 
@@ -64,7 +58,6 @@ int32_t platform_init_interrupt(uint32_t vector_id, void *isr_data)
 
 int32_t platform_deinit_interrupt(uint32_t vector_id)
 {
-    printf("RP: deinit irq vector %ld\r\n", vector_id);
     /* Prepare the MU Hardware */
     env_lock_mutex(platform_lock);
 
@@ -72,13 +65,8 @@ int32_t platform_deinit_interrupt(uint32_t vector_id)
     isr_counter--;
     if (isr_counter == 0)
     {
-#if defined(CPU_D0)
-//        IPC_D0_Int_Unmask(IPC_INT_SRC_BIT16 << vector_id);
-#elif defined(CPU_M0)
-//        IPC_M0_Int_Unmask(IPC_INT_SRC_BIT16 << vector_id);
-#elif defined(CPU_LP)
-//        IPC_LP_Int_Unmask(IPC_INT_SRC_BIT16 << vector_id);
-#endif
+        LOG_D("RP: deinit irq vector %ld\r\n", vector_id);
+        ipc_unmask_rpmsg(vector_id);
     }
 
     /* Unregister ISR from environment layer */
@@ -92,16 +80,13 @@ int32_t platform_deinit_interrupt(uint32_t vector_id)
 void platform_notify(uint32_t vector_id)
 {
 
-    /* As Linux suggests, use MU->Data Channel 1 as communication channel */
-    uint32_t msg = (uint32_t)(vector_id << 16);
-    printf("RP: notify vector %ld msg %ld\r\n", vector_id, msg);
-
+    LOG_D("RP: notify vector %ld \r\n", vector_id);
 
     env_lock_mutex(platform_lock);
 #if defined(CPU_M0)
-    ipc_send_rpmsg(GLB_CORE_ID_D0, IPC_INT_SRC_BIT16 << vector_id);
+    ipc_send_rpmsg(GLB_CORE_ID_D0, vector_id);
 #elif defined(CPU_D0)
-    ipc_send_rpmsg(GLB_CORE_ID_M0, IPC_INT_SRC_BIT16 << vector_id);
+    ipc_send_rpmsg(GLB_CORE_ID_M0, vector_id);
 #elif defined(CPU_LP)
 #error TODO!
 #endif
@@ -130,8 +115,10 @@ void platform_time_delay(uint32_t num_msec)
  */
 int32_t platform_in_isr(void)
 {
-    printf("TODO RP: in isr\r\n");
-    return __get_MCAUSE() & MCAUSE_INT;
+    // printf("RP: in isr %d\r\n", (__get_MCAUSE() >> 31));
+    // printf("RP: mcause %x " PRINTF_BINARY_PATTERN_INT32 " \r\n", __get_MCAUSE(), PRINTF_BYTE_TO_BINARY_INT32(__get_MCAUSE()));
+    /* XXX Need to Check this - Seems once a interupt fires, nothing clears the mcause register */
+    return (__get_MCAUSE() & MCAUSE_INT);
 }
 
 /**
@@ -146,7 +133,6 @@ int32_t platform_in_isr(void)
  */
 int32_t platform_interrupt_enable(uint32_t vector_id)
 {
-    printf("RP: enable irq vector %ld\r\n", vector_id);
     RL_ASSERT(0 < disable_counter);
 
     platform_global_isr_disable();
@@ -154,7 +140,8 @@ int32_t platform_interrupt_enable(uint32_t vector_id)
 
     if (disable_counter == 0)
     {
-        //NVIC_EnableIRQ(MU_A_IRQn);
+        LOG_D("RP: enable irq vector %ld\r\n", vector_id);
+        ipc_mask_msg((IPC_MSG_RPMSG0 + vector_id));
     }
     platform_global_isr_enable();
     return ((int32_t)vector_id);
@@ -172,7 +159,6 @@ int32_t platform_interrupt_enable(uint32_t vector_id)
  */
 int32_t platform_interrupt_disable(uint32_t vector_id)
 {
-    printf("RP: disable irq vector %ld\r\n", vector_id);
     RL_ASSERT(0 <= disable_counter);
 
     platform_global_isr_disable();
@@ -180,7 +166,8 @@ int32_t platform_interrupt_disable(uint32_t vector_id)
        if counter is set - the interrupts are disabled */
     if (disable_counter == 0)
     {
-        //NVIC_DisableIRQ(MU_A_IRQn);
+        LOG_D("RP: disable irq vector %ld\r\n", vector_id);
+        ipc_unmask_msg((IPC_MSG_RPMSG0 + vector_id));
     }
     disable_counter++;
     platform_global_isr_enable();
@@ -205,6 +192,7 @@ void platform_map_mem_region(uint32_t vrt_addr, uint32_t phy_addr, uint32_t size
  */
 void platform_cache_all_flush_invalidate(void)
 {
+    /* we might need to flush the xram address? */
 }
 
 /**
@@ -246,14 +234,6 @@ void *platform_patova(uintptr_t addr)
  */
 int32_t platform_init(void)
 {
-    /*
-     * Prepare for the MU Interrupt
-     *  MU must be initialized before rpmsg init is called
-     */
-    // MU_Init(MUA);
-    // NVIC_SetPriority(MU_A_IRQn, APP_MU_IRQ_PRIORITY);
-    // NVIC_EnableIRQ(MU_A_IRQn);
-
     /* Create lock used in multi-instanced RPMsg */
 #if defined(RL_USE_STATIC_API) && (RL_USE_STATIC_API == 1)
     if (0 != env_create_mutex(&platform_lock, 1, &platform_lock_static_ctxt))
