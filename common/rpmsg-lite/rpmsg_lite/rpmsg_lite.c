@@ -169,7 +169,7 @@ static void rpmsg_lite_rx_callback(struct virtqueue *vq)
 
     /* Process the received data from remote node */
     rpmsg_msg = (struct rpmsg_std_msg *)rpmsg_lite_dev->vq_ops->vq_rx(rpmsg_lite_dev->rvq, &len, &idx);
-
+    LOG_D("RPMSg Lite rx callback: rpmsg_msg: %p, len: %d, idx: %d\r\n", rpmsg_msg, len, idx);
     while (rpmsg_msg != RL_NULL)
     {
         node = rpmsg_lite_get_endpoint_from_addr(rpmsg_lite_dev, rpmsg_msg->hdr.dst);
@@ -179,6 +179,8 @@ static void rpmsg_lite_rx_callback(struct virtqueue *vq)
         {
             ept    = (struct rpmsg_lite_endpoint *)node->data;
             cb_ret = ept->rx_cb(rpmsg_msg->data, rpmsg_msg->hdr.len, rpmsg_msg->hdr.src, ept->rx_cb_data);
+        } else {
+            LOG_W("RPMSg Lite rx callback: no endpoint found for addr: %d\r\n", rpmsg_msg->hdr.dst);
         }
 
         if (cb_ret == RL_HOLD)
@@ -668,7 +670,7 @@ static int32_t rpmsg_lite_format_message(struct rpmsg_lite_instance *rpmsg_lite_
     }
 
     rpmsg_msg = (struct rpmsg_std_msg *)buffer;
-
+    LOG_D("RPMSG Buffer at %p - %d\r\n", rpmsg_msg, buff_len);
     /* Initialize RPMSG header. */
     rpmsg_msg->hdr.dst   = dst;
     rpmsg_msg->hdr.src   = src;

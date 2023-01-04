@@ -24,19 +24,7 @@ typedef enum {
 #define IS_MSG_RPMSG(val) ( (val) == IPC_MSG_RPMSG0 || \
                             (val) == IPC_MSG_RPMSG1 || \
                             (val) == IPC_MSG_RPMSG2 || \
-                            (val) == IPC_MSG_RPMSG3 || \
-                            (val) == IPC_MSG_RPMSG4 || \
-                            (val) == IPC_MSG_RPMSG5 || \
-                            (val) == IPC_MSG_RPMSG6 || \
-                            (val) == IPC_MSG_RPMSG7 || \
-                            (val) == IPC_MSG_RPMSG8 || \
-                            (val) == IPC_MSG_RPMSG9 || \
-                            (val) == IPC_MSG_RPMSG10 || \
-                            (val) == IPC_MSG_RPMSG11 || \
-                            (val) == IPC_MSG_RPMSG12 || \
-                            (val) == IPC_MSG_RPMSG13 || \
-                            (val) == IPC_MSG_RPMSG14 || \
-                            (val) == IPC_MSG_RPMSG15)
+                            (val) == IPC_MSG_RPMSG3)
 
 
 #define IPC_MSG_ALIVETIMEOUT 1000 * 1000 * 10 /* 10 seconds */

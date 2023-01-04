@@ -239,7 +239,7 @@ void virtqueue_free(struct virtqueue *vq);
 
 void virtqueue_free_static(struct virtqueue *vq);
 
-void virtqueue_dump(struct virtqueue *vq);
+void virtqueue_dump(const char *func, struct virtqueue *vq);
 
 void virtqueue_notification(struct virtqueue *vq);
 

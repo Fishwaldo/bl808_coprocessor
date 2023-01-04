@@ -17,7 +17,8 @@
  * to run the Linux
  */
 #ifndef VRING_ALIGN
-#define VRING_ALIGN (0x1000U)
+//#define VRING_ALIGN (0x1000U)
+#define VRING_ALIGN (0x10U)
 #endif
 
 /* contains pool of descriptos and two circular buffers */
