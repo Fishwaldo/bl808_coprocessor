@@ -98,9 +98,15 @@
 
 #if defined(__riscv)
 #include <csi_core.h>
-#define MEM_BARRIER() __DMB()
-#define MEM_BARRIER_R() __DMB()
-#define MEM_BARRIER_W() __DMB()
+#define MEM_BARRIER()  __DMB(); \
+                        //csi_dcache_clean_invalid_range(0x40000000, 16*1000*1000); \
+                        csi_dcache_clean_invalid();
+#define MEM_BARRIER_R() __DMB(); \
+                        //csi_dcache_clean_range(0x40000000, 16*1000*1000); \
+                        csi_dcache_clean_invalid();
+#define MEM_BARRIER_W() __DMB(); \
+                        //csi_dcache_clean_invalid_range(0x40000000, 16*1000*1000); \
+                        csi_dcache_clean_invalid();
 #else
 #define MEM_BARRIER() __asm__ volatile("dsb" : : : "memory")
 #define MEM_BARRIER_R() __asm__ volatile("dsb" : : : "memory")

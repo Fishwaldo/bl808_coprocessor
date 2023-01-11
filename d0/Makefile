@@ -14,7 +14,7 @@ CROSS_COMPILE ?= riscv64-unknown-elf-
 include $(BL_SDK_BASE)/project.build
 
 flash:
-	bflb-mcu-tool --chipname=bl808 --firmware build/build_out/ox64_coproc_bl808_d0.bin
+	bflb-mcu-tool --chipname=bl808 --firmware build/build_out/ox64_coproc_bl808_m0.bin
 
 monitor:
 	screen /dev/ttyACM0 2000000

@@ -31,6 +31,8 @@ int main(void)
     vPortDefineHeapRegions(xHeapRegions);
     LOG_I("Starting....\r\n");
     board_init();
+    //__BKPT();
+
 #if 0
     /* setup JTAG for D0 */
     struct bflb_device_s *gpio = bflb_device_get_by_name("gpio");

@@ -16,8 +16,8 @@ target_sources(app PRIVATE
     )
 
 add_subdirectory(src/cmd)
-add_subdirectory(../common/ipc ${build_dir}/ipc)
-add_subdirectory(../common/rpmsg-lite ${build_dir}/rpmsg-lite)
+add_subdirectory(../components/ipc ${build_dir}/ipc)
+add_subdirectory(../components/rpmsg-lite ${build_dir}/rpmsg-lite)
 
 target_compile_definitions(app PRIVATE -DUSBD_DFU_XFER_SIZE=1024)
 target_compile_definitions(app PRIVATE -DUSBD_DFU_APP_DEFAULT_ADD=0x58000000)

@@ -166,10 +166,8 @@ static void rpmsg_lite_rx_callback(struct virtqueue *vq)
 #if defined(RL_USE_ENVIRONMENT_CONTEXT) && (RL_USE_ENVIRONMENT_CONTEXT == 1)
     env_lock_mutex(rpmsg_lite_dev->lock);
 #endif
-
     /* Process the received data from remote node */
     rpmsg_msg = (struct rpmsg_std_msg *)rpmsg_lite_dev->vq_ops->vq_rx(rpmsg_lite_dev->rvq, &len, &idx);
-    LOG_D("RPMSg Lite rx callback: rpmsg_msg: %p, len: %d, idx: %d\r\n", rpmsg_msg, len, idx);
     while (rpmsg_msg != RL_NULL)
     {
         node = rpmsg_lite_get_endpoint_from_addr(rpmsg_lite_dev, rpmsg_msg->hdr.dst);
@@ -206,7 +204,7 @@ static void rpmsg_lite_rx_callback(struct virtqueue *vq)
 
 #if defined(RL_USE_ENVIRONMENT_CONTEXT) && (RL_USE_ENVIRONMENT_CONTEXT == 1)
     env_unlock_mutex(rpmsg_lite_dev->lock);
-#endif
+#endif  
 }
 
 /*!
@@ -220,7 +218,6 @@ static void rpmsg_lite_rx_callback(struct virtqueue *vq)
 static void rpmsg_lite_tx_callback(struct virtqueue *vq)
 {
     struct rpmsg_lite_instance *rpmsg_lite_dev = (struct rpmsg_lite_instance *)vq->priv;
-
     RL_ASSERT(rpmsg_lite_dev != RL_NULL);
     rpmsg_lite_dev->link_state = 1U;
     env_tx_callback(rpmsg_lite_dev->link_id);
@@ -670,7 +667,7 @@ static int32_t rpmsg_lite_format_message(struct rpmsg_lite_instance *rpmsg_lite_
     }
 
     rpmsg_msg = (struct rpmsg_std_msg *)buffer;
-    LOG_D("RPMSG Buffer at %p - %d\r\n", rpmsg_msg, buff_len);
+
     /* Initialize RPMSG header. */
     rpmsg_msg->hdr.dst   = dst;
     rpmsg_msg->hdr.src   = src;
@@ -876,6 +873,8 @@ int32_t rpmsg_lite_release_rx_buffer(struct rpmsg_lite_instance *rpmsg_lite_dev,
                             (2 * rpmsg_lite_dev->rvq->vq_nentries * rpmsg_lite_dev->rvq->vq_ring.desc->len)))))
 #endif
 
+    env_wmb();
+
     rpmsg_msg = RPMSG_STD_MSG_FROM_BUF(rxbuf);
 
     env_lock_mutex(rpmsg_lite_dev->lock);
@@ -885,6 +884,8 @@ int32_t rpmsg_lite_release_rx_buffer(struct rpmsg_lite_instance *rpmsg_lite_dev,
         rpmsg_lite_dev->rvq, rpmsg_msg,
         (uint32_t)virtqueue_get_buffer_length(rpmsg_lite_dev->rvq, rpmsg_msg->hdr.reserved.idx),
         rpmsg_msg->hdr.reserved.idx);
+
+    env_wmb();
 
 #if defined(RL_ALLOW_CONSUMED_BUFFERS_NOTIFICATION) && (RL_ALLOW_CONSUMED_BUFFERS_NOTIFICATION == 1)
     /* Let the remote device know that a buffer has been freed */

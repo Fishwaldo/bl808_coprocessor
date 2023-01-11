@@ -1,21 +1,22 @@
 #ifndef IPC_H
 #define IPC_H
-#include <bl808_ipc.h>
+#include "ipc_irq.h"
 
 /* we have 16K XRAM so we can play a bit with the size here */
 #define XRAM_RINGBUF_ADDR 0x40000000
 #define XRAM_RINGBUF_SIZE 0x3000
-#define XRAM_STATUS_ADDR     0x40003000
 
+/* timeout to wait for other core to clear a IPC interupt */
+#define IPC_TIMEOUT 100
 
-/* IPC_Int_Src_Type is the type of messages we have */
+/* IPC_IRQ_INT_SRC_Type is the type of messages we have */
 typedef enum {
-    IPC_MSG_PING = IPC_INT_SRC_BIT0,
-    IPC_MSG_PONG = IPC_INT_SRC_BIT1,
-    IPC_MSG_RPMSG0 = IPC_INT_SRC_BIT2,
-    IPC_MSG_RPMSG1 = IPC_INT_SRC_BIT3,
-    IPC_MSG_RPMSG2 = IPC_INT_SRC_BIT4,
-    IPC_MSG_RPMSG3 = IPC_INT_SRC_BIT5,
+    IPC_MSG_PING = IPC_IRQ_INT_SRC_BIT0,
+    IPC_MSG_PONG = IPC_IRQ_INT_SRC_BIT1,
+    IPC_MSG_RPMSG0 = IPC_IRQ_INT_SRC_BIT2,
+    IPC_MSG_RPMSG1 = IPC_IRQ_INT_SRC_BIT3,
+    IPC_MSG_RPMSG2 = IPC_IRQ_INT_SRC_BIT4,
+    IPC_MSG_RPMSG3 = IPC_IRQ_INT_SRC_BIT5,
 } IPC_MSG_Type;
 
 #define IPC_MSG_MASK_ALL()  (   IPC_MSG_PING || \

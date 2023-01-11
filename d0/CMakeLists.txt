@@ -9,8 +9,8 @@ sdk_add_include_directories(include)
 target_sources(app PRIVATE 
     )
 
-add_subdirectory(../common/ipc ${build_dir}/ipc)
-add_subdirectory(../common/rpmsg-lite ${build_dir}/rpmsg-lite)
+add_subdirectory(../components/ipc ${build_dir}/ipc)
+add_subdirectory(../components/rpmsg-lite ${build_dir}/rpmsg-lite)
 
 target_compile_options(app PRIVATE -ggdb -O0)
 # we need to set it on the shell library instead 

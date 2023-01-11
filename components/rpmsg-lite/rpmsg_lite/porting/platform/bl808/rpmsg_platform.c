@@ -5,7 +5,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <bl808_ipc.h>
+//#include <bl808_ipc.h>
 #include <log.h>
 #include "rpmsg_platform.h"
 #include "rpmsg_env.h"
@@ -21,6 +21,8 @@
 static int32_t isr_counter     = 0;
 static int32_t disable_counter = 0;
 static void *platform_lock;
+static int32_t in_isr_counter = 0;
+
 #if defined(RL_USE_STATIC_API) && (RL_USE_STATIC_API == 1)
 static LOCK_STATIC_CONTEXT platform_lock_static_ctxt;
 #endif
@@ -80,8 +82,6 @@ int32_t platform_deinit_interrupt(uint32_t vector_id)
 void platform_notify(uint32_t vector_id)
 {
 
-    LOG_D("RP: notify vector %ld \r\n", vector_id);
-
     env_lock_mutex(platform_lock);
 #if defined(CPU_M0)
     ipc_send_rpmsg(GLB_CORE_ID_D0, vector_id);
@@ -102,7 +102,7 @@ void platform_notify(uint32_t vector_id)
  */
 void platform_time_delay(uint32_t num_msec)
 {
-    CPU_MTimer_Delay_MS(num_msec);
+    bflb_mtimer_get_time_ms(num_msec);
 }
 
 /**
@@ -115,10 +115,7 @@ void platform_time_delay(uint32_t num_msec)
  */
 int32_t platform_in_isr(void)
 {
-    // printf("RP: in isr %d\r\n", (__get_MCAUSE() >> 31));
-    // printf("RP: mcause %x " PRINTF_BINARY_PATTERN_INT32 " \r\n", __get_MCAUSE(), PRINTF_BYTE_TO_BINARY_INT32(__get_MCAUSE()));
-    /* XXX Need to Check this - Seems once a interupt fires, nothing clears the mcause register */
-    return (__get_MCAUSE() & MCAUSE_INT);
+    return in_isr_counter > 0;
 }
 
 /**
@@ -258,4 +255,16 @@ int32_t platform_deinit(void)
     env_delete_mutex(platform_lock);
     platform_lock = ((void *)0);
     return 0;
+}
+
+void platform_inisr(bool in_isr)
+{
+    if (in_isr)
+    {
+        in_isr_counter++;
+    }
+    else
+    {
+        in_isr_counter--;
+    }
 }

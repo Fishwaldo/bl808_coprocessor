@@ -17,14 +17,23 @@
  * to run the Linux
  */
 #ifndef VRING_ALIGN
-//#define VRING_ALIGN (0x1000U)
-#define VRING_ALIGN (0x10U)
+#define VRING_ALIGN (0x1000U)
+//#define VRING_ALIGN (0x10U)
 #endif
 
 /* contains pool of descriptos and two circular buffers */
+#if 0
 #ifndef VRING_SIZE
 #define VRING_SIZE (0x1000UL)
 #endif
+#endif
+
+#define VRING_SIZE1 (RL_BUFFER_COUNT * sizeof(struct vring_desc))
+#define VRING_SIZE2 (VRING_SIZE1 + sizeof(struct vring_avail) + (RL_BUFFER_COUNT * sizeof(uint16_t)) + sizeof(uint16_t))
+#define VRING_SIZE3 ((VRING_SIZE2 + VRING_ALIGN - 1UL) & ~(VRING_ALIGN - 1UL))
+#define VRING_SIZE4 (VRING_SIZE3 + sizeof(struct vring_used) + (RL_BUFFER_COUNT * sizeof(struct vring_used_elem)) + sizeof(uint16_t))
+#define VRING_SIZE (((int32_t)VRING_SIZE4))
+
 
 /* size of shared memory + 2*VRING size */
 #define RL_VRING_OVERHEAD (2UL * VRING_SIZE)
@@ -34,17 +43,7 @@
 #define RL_GET_Q_ID(id)                 ((id)&0x1U)
 
 #define RL_PLATFORM_BL808_M0_LINK_ID (0U)
-#define RL_PLATFORM_BL808_D0_LINK_ID (1U)
-#define RL_PLATFORM_BL808_LP_LINK_ID (2U)
-#define RL_PLATFORM_HIGHEST_LINK_ID  (2U)
-
-#if __riscv_xlen == 32
-  #define MCAUSE_INT         0x80000000UL
-  #define MCAUSE_CAUSE       0x000003FFUL
-#else
-   #define MCAUSE_INT         0x8000000000000000UL
-   #define MCAUSE_CAUSE       0x00000000000003FFUL
-#endif
+#define RL_PLATFORM_HIGHEST_LINK_ID  (0U)
 
 
 /* platform interrupt related functions */

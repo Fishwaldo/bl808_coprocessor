@@ -42,14 +42,12 @@ int32_t rpmsg_queue_rx_cb(void *payload, uint32_t payload_len, uint32_t src, voi
     msg.data = payload;
     msg.len  = payload_len;
     msg.src  = src;
-
     /* if message is successfully added into queue then hold rpmsg buffer */
     if (0 != env_put_queue(priv, &msg, 0))
     {
         /* hold the rx buffer */
         return RL_HOLD;
     }
-
     return RL_RELEASE;
 }
 

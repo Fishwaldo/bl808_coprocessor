@@ -639,6 +639,7 @@ uint64_t env_get_timestamp(void)
 
 void env_isr(uint32_t vector)
 {
+    platform_inisr(true);
     struct isr_info *info;
     RL_ASSERT(vector < ISR_COUNT);
     if (vector < ISR_COUNT)
@@ -646,6 +647,7 @@ void env_isr(uint32_t vector)
         info = &isr_table[vector];
         virtqueue_notification((struct virtqueue *)info->data);
     }
+    platform_inisr(false);
 }
 
 /*

@@ -33,7 +33,7 @@
 #ifndef RPMSG_DEFAULT_CONFIG_H_
 #define RPMSG_DEFAULT_CONFIG_H_
 
-#define RL_USE_CUSTOM_CONFIG (1)
+#define RL_USE_CUSTOM_CONFIG (0)
 
 #if RL_USE_CUSTOM_CONFIG
 #include "rpmsg_config.h"
@@ -53,7 +53,7 @@
 //! Delay in milliseconds used in non-blocking API functions for polling.
 //! The default value is 1.
 #ifndef RL_MS_PER_INTERVAL
-#define RL_MS_PER_INTERVAL (1)
+#define RL_MS_PER_INTERVAL (10)
 #endif
 
 //! @def RL_ALLOW_CUSTOM_SHMEM_CONFIG

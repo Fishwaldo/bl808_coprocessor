@@ -247,7 +247,8 @@ void *virtqueue_get_buffer(struct virtqueue *vq, uint32_t *len, uint16_t *idx)
 {
     struct vring_used_elem *uep;
     uint16_t used_idx, desc_idx;
-
+    env_mb();
+    virtqueue_dump(__FUNCTION__, vq);
     if ((vq == VQ_NULL) || (vq->vq_used_cons_idx == vq->vq_ring.used->idx))
     {
         return (VQ_NULL);
@@ -257,7 +258,6 @@ void *virtqueue_get_buffer(struct virtqueue *vq, uint32_t *len, uint16_t *idx)
     used_idx = (uint16_t)(vq->vq_used_cons_idx & ((uint16_t)(vq->vq_nentries - 1U)));
     uep      = &vq->vq_ring.used->ring[used_idx];
 
-    env_rmb();
 
     desc_idx = (uint16_t)uep->id;
     if (len != VQ_NULL)
@@ -273,7 +273,6 @@ void *virtqueue_get_buffer(struct virtqueue *vq, uint32_t *len, uint16_t *idx)
     vq->vq_used_cons_idx++;
 
     VQUEUE_IDLE(vq, used_read);
-    virtqueue_dump(__FUNCTION__, vq);
 #if defined(RL_USE_ENVIRONMENT_CONTEXT) && (RL_USE_ENVIRONMENT_CONTEXT == 1)
     return env_map_patova(vq->env, ((uint32_t)(vq->vq_ring.desc[desc_idx].addr)));
 #else
@@ -346,6 +345,8 @@ void *virtqueue_get_available_buffer(struct virtqueue *vq, uint16_t *avail_idx, 
 {
     uint16_t head_idx = 0;
     void *buffer;
+    
+    env_rmb();
 
     if (vq->vq_available_idx == vq->vq_ring.avail->idx)
     {
@@ -490,6 +491,7 @@ void virtqueue_dump(const char *func, struct virtqueue *vq)
     {
         return;
     }
+    return;
 
     env_print(
         "VQ: %s -  %s - size=%d; used=%d; queued=%d; "
@@ -682,8 +684,9 @@ void virtqueue_notification(struct virtqueue *vq)
     {
         if (vq->callback_fc != VQ_NULL)
         {
-            virtqueue_dump(__FUNCTION__, vq);
+            env_mb();
             vq->callback_fc(vq);
+            virtqueue_dump(__FUNCTION__, vq);
         }
     }
 

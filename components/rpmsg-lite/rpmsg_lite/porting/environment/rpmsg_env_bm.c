@@ -247,7 +247,7 @@ void env_mb(void)
  */
 void env_rmb(void)
 {
-    MEM_BARRIER();
+    MEM_BARRIER_R();
 }
 
 /*!
@@ -255,7 +255,7 @@ void env_rmb(void)
  */
 void env_wmb(void)
 {
-    MEM_BARRIER();
+    MEM_BARRIER_W();
 }
 
 /*!
@@ -433,6 +433,7 @@ void env_disable_cache(void)
 
 void env_isr(uint32_t vector)
 {
+    platform_inisr(true);
     struct isr_info *info;
     RL_ASSERT(vector < ISR_COUNT);
     if (vector < ISR_COUNT)
@@ -440,4 +441,6 @@ void env_isr(uint32_t vector)
         info = &isr_table[vector];
         virtqueue_notification((struct virtqueue *)info->data);
     }
+    platform_inisr(false);
+
 }
