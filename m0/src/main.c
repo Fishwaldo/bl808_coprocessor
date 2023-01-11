@@ -53,14 +53,28 @@ int main(void)
     LOG_I("Console Started\r\n");
     //pt_table_set_flash_operation(bflb_flash_erase, bflb_flash_write, bflb_flash_read);    
     //pt_table_dump();
+
+    LOG_I("Init IPC\r\n");
+    if (ipc_init() != SUCCESS) {
+        LOG_W("Failed to Initialize IPC\r\n");
+    }
+
     LOG_I("About to Start RPMSG Task\r\n");
     if (xTaskCreate(rpmsg_task, "RPMSG_TASK", 2048, NULL, tskIDLE_PRIORITY + 1U, &rpmsg_task_handle) != pdPASS)
     {
         printf("\r\nFailed to create rpmsg task\r\n");
         return -1;
     }
+    LOG_I("Forward SDH Interupt to D0\r\n");
+    if (ipc_forward_interupt(SDH_IRQn, GLB_CORE_ID_D0, IPC_MSG_IRQFWD1) != SUCCESS) {
+        LOG_W("Failed to Forward SDH Interupt\r\n");
+    }
+#ifdef Zagitta_test
+    bflb_irq_set_pending(SDH_IRQn);
+    ipc_isr_forward(SDH_IRQn, IPC_MSG_IRQFWD1);
+#endif
+
     LOG_I("Starting Scheduler\r\n");
-    printf("main: mcause %x " PRINTF_BINARY_PATTERN_INT32 " \r\n", __get_MCAUSE(), PRINTF_BYTE_TO_BINARY_INT32(__get_MCAUSE()));
 
     vTaskStartScheduler();
     /* we should never get here */

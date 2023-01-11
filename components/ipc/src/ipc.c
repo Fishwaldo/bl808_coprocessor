@@ -14,16 +14,36 @@ typedef struct
     uint64_t m0ping;
     uint64_t d0ping;
     uint64_t lpping;
+    struct irq_fwd {
+        GLB_CORE_ID_Type targetcpu;
+        irq_callback irq_handler;
+    } irq_fwd[4];
 } ipc_status_t;
 
-ipc_status_t ipc_status;
+void ipc_isr_forward_default(int irq, void *param);
+
+ipc_status_t ipc_status = {
+        .m0ping = 0,
+        .d0ping = 0,
+        .lpping = 0,
+        .irq_fwd = {
+            { .targetcpu = GLB_CORE_ID_INVALID,
+              .irq_handler = ipc_isr_forward_default },
+            { .targetcpu = GLB_CORE_ID_INVALID,
+              .irq_handler = ipc_isr_forward_default },
+            { .targetcpu = GLB_CORE_ID_INVALID,
+              .irq_handler = ipc_isr_forward_default },
+            { .targetcpu = GLB_CORE_ID_INVALID,
+              .irq_handler = ipc_isr_forward_default },
+        }
+    };
 
 struct rpmsg_lite_instance *ipc_rpmsg;
 struct rpmsg_lite_endpoint *ipc_rpmsg_default_endpoint;
 rpmsg_ns_handle ipc_rpmsg_ns;
 rpmsg_queue_handle ipc_rpmsg_queue;
 
-static int ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd);
+static BL_Err_Type ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd);
 
 void ipc_m0_callback(uint32_t src)
 {
@@ -44,6 +64,13 @@ void ipc_m0_callback(uint32_t src)
         /* env_isr is in the porting layer of rpmsg-lite */
         LOG_D("IPC: Got Notify for Vector %d\r\n", ffs(src) - IPC_MSG_RPMSG0 - 1);
         env_isr(ffs(src) - IPC_MSG_RPMSG0 - 1);
+        break;
+    case IPC_MSG_IRQFWD1:
+    case IPC_MSG_IRQFWD2:
+    case IPC_MSG_IRQFWD3:
+    case IPC_MSG_IRQFWD4:
+        LOG_D("IPCIRQForward: Got Notify for Vector %d\r\n", src);
+        ipc_status.irq_fwd[ffs(src) - IPC_MSG_IRQFWD1 -1].irq_handler(ffs(src) - IPC_MSG_IRQFWD1 -1, (void *)src);
         break;
     }
 }
@@ -68,6 +95,13 @@ void ipc_d0_callback(uint32_t src)
         LOG_D("IPC: Got Notify for Vector %d\r\n", ffs(src) - IPC_MSG_RPMSG0 - 1);
         env_isr(ffs(src) - IPC_MSG_RPMSG0 - 1);
         break;
+    case IPC_MSG_IRQFWD1:
+    case IPC_MSG_IRQFWD2:
+    case IPC_MSG_IRQFWD3:
+    case IPC_MSG_IRQFWD4:
+        LOG_D("IPCIRQForward: Got Notify for Vector %d\r\n", src);
+        ipc_status.irq_fwd[ffs(src) - IPC_MSG_IRQFWD1 -1].irq_handler(ffs(src) - IPC_MSG_IRQFWD1 -1, (void *)src);
+        break;
     }
 }
 
@@ -89,7 +123,25 @@ void ipc_lp_callback(uint32_t src)
     case IPC_MSG_RPMSG3:
         env_isr(ffs(src) - IPC_MSG_RPMSG0 - 1);
         break;
+    case IPC_MSG_IRQFWD1:
+    case IPC_MSG_IRQFWD2:
+    case IPC_MSG_IRQFWD3:
+    case IPC_MSG_IRQFWD4:
+        LOG_D("IPCIRQForward: Got Notify for Vector %d\r\n", src);
+        ipc_status.irq_fwd[ffs(src) - IPC_MSG_IRQFWD1 -1].irq_handler(ffs(src) - IPC_MSG_IRQFWD1 -1, (void *)src);
+        break;
     }
+}
+
+void ipc_isr_forward(int irq, void *param)
+{
+    IPC_MSG_Type msg = (IPC_MSG_Type)param;
+    LOG_D("IPC: Forwarding IRQ %d as IPC Interupt Command %d\r\n", irq, msg);
+    ipc_send_cmd(GLB_CORE_ID_D0, msg);
+}
+
+void ipc_isr_forward_default(int irq, void *param) {
+    LOG_D("Got Unhandled IPC IRQ Forward %d\r\n", irq);
 }
 
 void ipc_rpmsg_ns_callback(uint32_t new_ept, const char *new_ept_name, uint32_t flags, void *user_data)
@@ -201,14 +253,14 @@ void rpmsg_task(void *unused)
     return;
 }
 
-static int ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd)
+static BL_Err_Type ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd)
 {
     CHECK_PARAM(IS_GLB_CORE_ID_TYPE(targetcpu));
     GLB_CORE_ID_Type mycpu = GLB_Get_Core_Type();
     if (mycpu == targetcpu)
     {
         LOG_W("IPC: Cannot send message %d to self\r\n", cmd);
-        return 0;
+        return INVALID;
     }
     /* rpmsg needs to process each command before we send another,
     so we will busy spin on the IPC interupt for the core to see when its cleared
@@ -218,30 +270,30 @@ static int ipc_send_cmd(GLB_CORE_ID_Type targetcpu, uint32_t cmd)
     case GLB_CORE_ID_M0:
         if (IPC_IRQ_M0_Trigger_CPUx(targetcpu, cmd, IPC_TIMEOUT) != SUCCESS)
         {
-            LOG_W("IPC: Failed to send message %d to %d\r\n", cmd, targetcpu);
-            return 0;
+            LOG_W("IPC: Failed to send IPC %d to %d\r\n", cmd, targetcpu);
+            return TIMEOUT;
         }
         break;
     case GLB_CORE_ID_D0:
         if (IPC_IRQ_D0_Trigger_CPUx(targetcpu, cmd, IPC_TIMEOUT) != SUCCESS)
         {
-            LOG_W("IPC: Failed to send message %d to %d\r\n", cmd, targetcpu);
-            return 0;
+            LOG_W("IPC: Failed to send IPC %d to %d\r\n", cmd, targetcpu);
+            return TIMEOUT;
         }
         break;
     case GLB_CORE_ID_LP:
         if (IPC_IRQ_LP_Trigger_CPUx(targetcpu, cmd, IPC_TIMEOUT) != SUCCESS)
         {
-            LOG_W("IPC: Failed to send message %d to %d\r\n", cmd, targetcpu);
-            return 0;
+            LOG_W("IPC: Failed to send IPC %d to %d\r\n", cmd, targetcpu);
+            return TIMEOUT;
         }
         break;
     case GLB_CORE_ID_MAX:
     case GLB_CORE_ID_INVALID:
         LOG_W("Unknown CPU\r\n");
-        return 0;
+        return INVALID;
     }
-    return 1;
+    return SUCCESS;
 }
 
 bool ipc_is_core_alive(GLB_CORE_ID_Type cpu)
@@ -258,44 +310,59 @@ bool ipc_is_core_alive(GLB_CORE_ID_Type cpu)
     case GLB_CORE_ID_MAX:
     case GLB_CORE_ID_INVALID:
         LOG_W("Unknown CPU\r\n");
-        return 0;
+        return false;
     }
-    return 0;
+    return false;
 }
 
-int ipc_send_ping(GLB_CORE_ID_Type cpu)
+BL_Err_Type ipc_send_ping(GLB_CORE_ID_Type cpu)
 {
     return ipc_send_cmd(cpu, IPC_MSG_PING);
 }
 
-int ipc_send_pong(GLB_CORE_ID_Type cpu)
+BL_Err_Type ipc_send_pong(GLB_CORE_ID_Type cpu)
 {
     return ipc_send_cmd(cpu, IPC_MSG_PONG);
 }
 
-int ipc_send_rpmsg(GLB_CORE_ID_Type cpu, uint32_t cmd)
+BL_Err_Type ipc_send_rpmsg(GLB_CORE_ID_Type cpu, uint32_t cmd)
 {
     return ipc_send_cmd(cpu, (IPC_MSG_RPMSG0 + cmd));
 }
 
-int ipc_mask_msg(IPC_MSG_Type msg)
+BL_Err_Type ipc_mask_msg(IPC_MSG_Type msg)
 {
     /* XXX TODO - we need a Unmask Function in the SDK to go with this */
     return 1;
 }
 
-int ipc_unmask_msg(IPC_MSG_Type msg)
+BL_Err_Type ipc_unmask_msg(IPC_MSG_Type msg)
 {
     /* XXX TODO - Need to write our own Unmask Function */
     return 1;
 }
 
-int ipc_mask_rpmsg(uint32_t vector)
+BL_Err_Type ipc_mask_rpmsg(uint32_t vector)
 {
     return ipc_mask_msg(IPC_MSG_RPMSG0 + vector);
 }
 
-int ipc_unmask_rpmsg(uint32_t vector)
+BL_Err_Type ipc_unmask_rpmsg(uint32_t vector)
 {
     return ipc_unmask_msg(IPC_MSG_RPMSG0 + vector);
+}
+
+BL_Err_Type ipc_forward_interupt(int irq, GLB_CORE_ID_Type targetcpu, IPC_MSG_Type msg)
+{
+    if (bflb_irq_attach(irq, ipc_isr_forward, (void *)msg) != 0) {
+        LOG_W("IPCFWD: Failed to attach IRQ %d\r\n", irq);
+    }
+    ipc_status.irq_fwd[(msg - IPC_MSG_IRQFWD1)].targetcpu = targetcpu;
+    bflb_irq_enable(irq);
+    LOG_I("IPCFWD: Forwarding IRQ %d to %d as message %d in slot %d\r\n", irq, targetcpu, msg, (msg - IPC_MSG_IRQFWD1));
+    return SUCCESS;
+}
+
+BL_Err_Type ipc_init() {
+    return SUCCESS;
 }

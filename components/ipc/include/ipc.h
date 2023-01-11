@@ -17,6 +17,10 @@ typedef enum {
     IPC_MSG_RPMSG1 = IPC_IRQ_INT_SRC_BIT3,
     IPC_MSG_RPMSG2 = IPC_IRQ_INT_SRC_BIT4,
     IPC_MSG_RPMSG3 = IPC_IRQ_INT_SRC_BIT5,
+    IPC_MSG_IRQFWD1 = IPC_IRQ_INT_SRC_BIT6,
+    IPC_MSG_IRQFWD2 = IPC_IRQ_INT_SRC_BIT7,
+    IPC_MSG_IRQFWD3 = IPC_IRQ_INT_SRC_BIT8,
+    IPC_MSG_IRQFWD4 = IPC_IRQ_INT_SRC_BIT9,
 } IPC_MSG_Type;
 
 #define IPC_MSG_MASK_ALL()  (   IPC_MSG_PING || \
@@ -59,14 +63,16 @@ typedef enum {
 
 void rpmsg_task(void *unused);
 
-int ipc_mask_msg(IPC_MSG_Type msg);
-int ipc_unmask_msg(IPC_MSG_Type msg);
-int ipc_send_ping(GLB_CORE_ID_Type cpu);
-int ipc_send_pong(GLB_CORE_ID_Type cpu);
-int ipc_send_rpmsg(GLB_CORE_ID_Type cpu, uint32_t vector);
-int ipc_mask_rpmsg(uint32_t vector);
-int ipc_unmask_rpmsg(uint32_t vector);
+BL_Err_Type ipc_init();
 
+BL_Err_Type ipc_mask_msg(IPC_MSG_Type msg);
+BL_Err_Type ipc_unmask_msg(IPC_MSG_Type msg);
+BL_Err_Type ipc_send_ping(GLB_CORE_ID_Type cpu);
+BL_Err_Type ipc_send_pong(GLB_CORE_ID_Type cpu);
+BL_Err_Type ipc_send_rpmsg(GLB_CORE_ID_Type cpu, uint32_t vector);
+BL_Err_Type ipc_mask_rpmsg(uint32_t vector);
+BL_Err_Type ipc_unmask_rpmsg(uint32_t vector);
+BL_Err_Type ipc_forward_interupt(int irq, GLB_CORE_ID_Type targetcpu, IPC_MSG_Type msg);
 bool ipc_is_core_alive(GLB_CORE_ID_Type cpu);
 
 
