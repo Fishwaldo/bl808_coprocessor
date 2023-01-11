@@ -51,7 +51,7 @@ const pmp_config_entry_t pmp_entry_tab[8] = {
     [0] = {
         .entry_flag = ENTRY_FLAG_ADDR_NAPOT | ENTRY_FLAG_PERM_W | ENTRY_FLAG_PERM_R,
         .entry_pa_base = 0x20000000,
-        .entry_pa_length = PMP_REG_SZ_1M,
+        .entry_pa_length = 0x10000,
     },
 
     [1] = {
