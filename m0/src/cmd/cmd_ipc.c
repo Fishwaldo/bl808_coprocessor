@@ -35,7 +35,15 @@ int ipc_ping(int argc, char **argv) {
     return 1;
 }
 
-
+int cmd_ipc_irqfw(int argc, char **argv) {
+    if (argc == 1) {
+        printf("Missing Command\r\n");
+        printf("ipc irqfw\t - Test IRQ Forwarding\r\n");
+        return 1;
+    }
+    ipc_isr_forward(SDH_IRQn, IPC_MSG_IRQFWD1);
+    return 1;
+}
 int cmd_ipc(int argc, char **argv) {
     if (argc == 1) {
         printf("Missing Command\r\n");
@@ -51,6 +59,10 @@ int cmd_ipc(int argc, char **argv) {
         printf("M0: %s\r\n", ipc_is_core_alive(GLB_CORE_ID_M0) ? "alive" : "dead");
         printf("D0: %s\r\n", ipc_is_core_alive(GLB_CORE_ID_D0) ? "alive" : "dead");
         printf("LP: %s\r\n", ipc_is_core_alive(GLB_CORE_ID_LP) ? "alive" : "dead");
+        return 1;
+    }
+    if (strcasecmp(argv[1], "irqfw") == 0) {
+        cmd_ipc_irqfw(argc, argv);
         return 1;
     }
     printf("Unknown Command\r\n");
